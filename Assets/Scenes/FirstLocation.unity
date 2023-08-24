@@ -2448,6 +2448,10 @@ PrefabInstance:
       propertyPath: _groundMask.m_Bits
       value: 8
       objectReference: {fileID: 0}
+    - target: {fileID: 6522238646550408150, guid: 460ff6f7fba02f4439f1f0048a80a21a, type: 3}
+      propertyPath: _slopeForceRayLength
+      value: 1.2
+      objectReference: {fileID: 0}
     - target: {fileID: 6875601687808833297, guid: 460ff6f7fba02f4439f1f0048a80a21a, type: 3}
       propertyPath: m_UsedByComposite
       value: 0

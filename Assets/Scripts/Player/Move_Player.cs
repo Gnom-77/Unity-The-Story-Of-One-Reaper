@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class Move_Player : MonoBehaviour
 {
@@ -15,20 +16,36 @@ public class Move_Player : MonoBehaviour
     [Header("Change Friction")]
     [SerializeField] PhysicsMaterial2D _lowFriction;
     [SerializeField] PhysicsMaterial2D _hightFriction;
+    [Space]
+    [Header("Slope Movement")]
+    [Range(0, 10)][SerializeField] private float _slopeForce = 1f;
+    [Range(0, 20)][SerializeField] private float _slopeForceRayLength = 5f;
 
 
     private float _horizontalMove = 0f;
     private Rigidbody2D _playerRb;
     private bool _isFacingRight = true;
+    private Vector2 _targetVelocity;
+
+    private float _slopeDownAngle;
+    private float _slopeDownAngleOld;
+    private Vector2 _colliderSize;
+    private Vector2 _newVelocity;
+    private Vector2 _newForce;
+    private Vector2 _slopeNormalPerpendecular;
+    private bool _isOnSlope;
+    private bool _isJumping = false;
 
     private void Start()
     {
         _playerRb = GetComponent<Rigidbody2D>();
+        _colliderSize = GetComponent<CapsuleCollider2D>().size;
     }
 
     private void Update()
     {
-        Debug.DrawRay(transform.position, Vector2.down * _rayDistance, Color.green);
+        //Debug.DrawRay(transform.position, Vector2.down * _rayDistance, Color.green);
+        //Debug.DrawRay(transform.position, Vector2.down * _slopeForceRayLength, Color.red);
         Move();
         Jump();
         ChangeFriction();
@@ -36,9 +53,28 @@ public class Move_Player : MonoBehaviour
 
     private void FixedUpdate()
     {
-        Vector2 targetVelocity = new(_horizontalMove * 10,
+        CheckSloping();
+        _targetVelocity.Set(_horizontalMove * 10,
                                              _playerRb.velocity.y);
-        _playerRb.velocity = targetVelocity;
+        _playerRb.velocity = _targetVelocity;
+
+        if (CheckGrounding() && !_isOnSlope && !_isJumping)
+        {
+            _targetVelocity.Set(_horizontalMove * 10, 0.0f);
+            _playerRb.velocity = _targetVelocity;
+        }
+        else if (CheckGrounding() && _isOnSlope && !_isJumping)
+        {
+            _targetVelocity.Set(_horizontalMove * _slopeNormalPerpendecular.x * -10,
+                _horizontalMove * _slopeNormalPerpendecular.y * -10);
+            _playerRb.velocity = _targetVelocity;
+        }
+        else if (!CheckGrounding())
+        {
+            _targetVelocity.Set(_horizontalMove * 10,
+                                                 _playerRb.velocity.y);
+            _playerRb.velocity = _targetVelocity;
+        }
     }
 
     private void Move()
@@ -59,6 +95,11 @@ public class Move_Player : MonoBehaviour
         if (CheckGrounding() && Input.GetKeyDown(KeyCode.Space))
         {
             _playerRb.AddForce(transform.up * _jumpForce, ForceMode2D.Impulse);
+            _isJumping = true;
+        }
+        if (_playerRb.velocity.y <= 0.0f)
+        {
+            _isJumping = false;
         }
     }
 
@@ -69,6 +110,11 @@ public class Move_Player : MonoBehaviour
         Vector3 theScale = transform.localScale;
         theScale.x *= -1;
         transform.localScale = theScale;
+    }
+
+    private void Slope()
+    {
+
     }
 
     private bool CheckGrounding()
@@ -91,5 +137,31 @@ public class Move_Player : MonoBehaviour
         }
     }
 
+    private void CheckSloping()
+    {
+        Vector2 checkPosition = transform.position - new Vector3(0.0f, _colliderSize.y / 2);
+        SlopeCheckVerical(checkPosition);
+    }
 
+    private void SlopeCheckVerical(Vector2 checkPosition)
+    {
+        RaycastHit2D hit = Physics2D.Raycast(checkPosition, Vector2.down, _slopeForceRayLength, _groundMask);
+
+        if (hit)
+        {
+            _slopeNormalPerpendecular = Vector2.Perpendicular(hit.normal).normalized;
+
+            _slopeDownAngle = Vector2.Angle(hit.normal, Vector2.up);
+
+            if(_slopeDownAngle != _slopeDownAngleOld)
+            {
+                _isOnSlope = true;
+            }
+
+            _slopeDownAngleOld = _slopeDownAngle;
+
+            Debug.DrawRay(hit.point, _slopeNormalPerpendecular, Color.red);
+            Debug.DrawRay(hit.point, hit.normal, Color.green);
+        }
+    }
 }
