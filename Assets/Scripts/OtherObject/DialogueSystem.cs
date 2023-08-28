@@ -37,9 +37,9 @@ public class DialogueSystem : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        _isStartPanel = true;
         if (collision.gameObject.CompareTag("Player") && _dialogue.Length > 0)
         {
+            _isStartPanel = true;
             Debug.Log("Is ative");
             _startPanel.SetActive(true);
         }
@@ -49,6 +49,8 @@ public class DialogueSystem : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Player"))
         {
+            if (_index == -2)
+                _index = -1;
             Debug.Log("Is close");
             _startPanel.SetActive(false);
             _textPanel.SetActive(false);
@@ -62,23 +64,20 @@ public class DialogueSystem : MonoBehaviour
         {
             LastText();
         }
-        else 
-        if (_index == 0)
+        else if (_index == 0)
         {
             _textWindow.text = "";
             StartCoroutine(nameof(TypeLine));
             _index++;
         }
-        else
-        if (Input.GetKeyDown(KeyCode.E) && _index <= _dialogue.Length - 1) 
+        else if (Input.GetKeyDown(KeyCode.E) && _index <= _dialogue.Length - 1) 
         {
             StopAllCoroutines();
             _textWindow.text = "";
             StartCoroutine(nameof(TypeLine));
             _index++;
         }
-        else 
-        if (Input.GetKeyDown(KeyCode.E) && _index > _dialogue.Length - 1)
+        else if (Input.GetKeyDown(KeyCode.E) && _index > _dialogue.Length - 1)
         {
             CloseAllPanel();
             _index = -1;
@@ -96,8 +95,7 @@ public class DialogueSystem : MonoBehaviour
             _index = -2;
             Debug.Log("It's a BUG!!!");
         }
-        else
-        if (_index == -2 && Input.GetKeyDown(KeyCode.E) && _isStartPanel == false)
+        else if (_index == -2 && Input.GetKeyDown(KeyCode.E) && _isStartPanel == false)
         {
             Debug.LogError("It's a BUG!!!");
             _index = -1;
