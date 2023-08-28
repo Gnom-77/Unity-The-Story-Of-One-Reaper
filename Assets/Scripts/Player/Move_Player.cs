@@ -18,21 +18,21 @@ public class Move_Player : MonoBehaviour
     [SerializeField] PhysicsMaterial2D _hightFriction;
     [Space]
     [Header("Slope Movement")]
-    [Range(0, 10)][SerializeField] private float _slopeForce = 1f;
     [Range(0, 20)][SerializeField] private float _slopeForceRayLength = 5f;
 
 
-    private float _horizontalMove = 0f;
+    
     private Rigidbody2D _playerRb;
-    private bool _isFacingRight = true;
-    private Vector2 _targetVelocity;
 
+    private Vector2 _targetVelocity;
+    private Vector2 _colliderSize;
+    private Vector2 _slopeNormalPerpendecular;
+
+    private float _horizontalMove = 0f;
     private float _slopeDownAngle;
     private float _slopeDownAngleOld;
-    private Vector2 _colliderSize;
-    private Vector2 _newVelocity;
-    private Vector2 _newForce;
-    private Vector2 _slopeNormalPerpendecular;
+
+    private bool _isFacingRight = true;
     private bool _isOnSlope;
     private bool _isJumping = false;
 
@@ -45,7 +45,7 @@ public class Move_Player : MonoBehaviour
     private void Update()
     {
         //Debug.DrawRay(transform.position, Vector2.down * _rayDistance, Color.green);
-        //Debug.DrawRay(transform.position, Vector2.down * _slopeForceRayLength, Color.red);
+        Debug.DrawRay(transform.position, Vector2.down * _slopeForceRayLength, Color.grey);
         Move();
         Jump();
         ChangeFriction();
@@ -53,28 +53,7 @@ public class Move_Player : MonoBehaviour
 
     private void FixedUpdate()
     {
-        CheckSloping();
-        _targetVelocity.Set(_horizontalMove * 10,
-                                             _playerRb.velocity.y);
-        _playerRb.velocity = _targetVelocity;
-
-        if (CheckGrounding() && !_isOnSlope && !_isJumping)
-        {
-            _targetVelocity.Set(_horizontalMove * 10, 0.0f);
-            _playerRb.velocity = _targetVelocity;
-        }
-        else if (CheckGrounding() && _isOnSlope && !_isJumping)
-        {
-            _targetVelocity.Set(_horizontalMove * _slopeNormalPerpendecular.x * -10,
-                _horizontalMove * _slopeNormalPerpendecular.y * -10);
-            _playerRb.velocity = _targetVelocity;
-        }
-        else if (!CheckGrounding())
-        {
-            _targetVelocity.Set(_horizontalMove * 10,
-                                                 _playerRb.velocity.y);
-            _playerRb.velocity = _targetVelocity;
-        }
+        SlopeAndChangePosition();
     }
 
     private void Move()
@@ -112,9 +91,36 @@ public class Move_Player : MonoBehaviour
         transform.localScale = theScale;
     }
 
-    private void Slope()
+    private void SlopeAndChangePosition()
     {
+        CheckSloping();
 
+        ChangePlayerPosition();
+
+        if (CheckGrounding() && !_isOnSlope && !_isJumping)
+        {
+            _targetVelocity.Set(_horizontalMove * 10, 0.0f);
+            _playerRb.velocity = _targetVelocity;
+        }
+        else if (CheckGrounding() && _isOnSlope && !_isJumping)
+        {
+            _targetVelocity.Set(_horizontalMove * _slopeNormalPerpendecular.x * -10,
+                _horizontalMove * _slopeNormalPerpendecular.y * -10);
+            _playerRb.velocity = _targetVelocity;
+        }
+        else if (!CheckGrounding())
+        {
+            _targetVelocity.Set(_horizontalMove * 10,
+                                                 _playerRb.velocity.y);
+            _playerRb.velocity = _targetVelocity;
+        }
+    }
+
+    private void ChangePlayerPosition()
+    {
+        _targetVelocity.Set(_horizontalMove * 10,
+                                     _playerRb.velocity.y);
+        _playerRb.velocity = _targetVelocity;
     }
 
     private bool CheckGrounding()

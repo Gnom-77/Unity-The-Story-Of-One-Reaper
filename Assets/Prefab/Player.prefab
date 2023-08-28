@@ -164,9 +164,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _speedPlayer: 1
   _jumpForce: 10
-  _isGrounded: 0
-  _checkGroundOffSetY: -0.8
-  _checkGroundRadius: 0.3
+  _groundMask:
+    serializedVersion: 2
+    m_Bits: 0
+  _rayDistance: 2
+  _lowFriction: {fileID: 0}
+  _hightFriction: {fileID: 0}
+  _slopeForceRayLength: 5
 --- !u!114 &3659050377893233958
 MonoBehaviour:
   m_ObjectHideFlags: 0
