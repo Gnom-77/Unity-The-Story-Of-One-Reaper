@@ -8,8 +8,12 @@ public class Move_Player : MonoBehaviour
     [Header("Player Movement Settings")]
     [Range(0, 10)][SerializeField] private float _speedPlayer = 1f;
     [Range(0, 20)][SerializeField] private float _jumpForce = 5f;
+    [Range(0, 20)][SerializeField] private float _jumpForceIfInTexture = 1f;
     [Space]
     [Header("Ground Cheker Settings")]
+    [SerializeField] private Transform _groundCheck;
+    [SerializeField] private Transform _groundCheckInPlayer;
+    [SerializeField] private float _groundCheckRadius;
     [SerializeField] LayerMask _groundMask;
     [Range(0, 5)][SerializeField] float _rayDistance = 2.0f;
     [Space]
@@ -19,9 +23,9 @@ public class Move_Player : MonoBehaviour
     [Space]
     [Header("Slope Movement")]
     [Range(0, 20)][SerializeField] private float _slopeForceRayLength = 5f;
+    [Header("Player Dialogue Panel")]
+    [SerializeField] GameObject _playerDialoguePanel;
 
-
-    
     private Rigidbody2D _playerRb;
 
     private Vector2 _targetVelocity;
@@ -44,15 +48,19 @@ public class Move_Player : MonoBehaviour
 
     private void Update()
     {
-        //Debug.DrawRay(transform.position, Vector2.down * _rayDistance, Color.green);
-        Debug.DrawRay(transform.position, Vector2.down * _slopeForceRayLength, Color.grey);
-        Move();
-        Jump();
+        //Debug.DrawRay(transform.position, Vector2.down * _slopeForceRayLength, Color.grey);
+        Debug.DrawRay(_groundCheck.position, Vector2.down * _rayDistance, Color.red);
+        if (!_playerDialoguePanel.activeSelf)
+        {
+            Move();
+            Jump();
+        }
         ChangeFriction();
     }
 
     private void FixedUpdate()
     {
+        CheckColliderInPlayer();
         SlopeAndChangePosition();
     }
 
@@ -85,10 +93,12 @@ public class Move_Player : MonoBehaviour
     private void Flip() 
     {
         _isFacingRight = !_isFacingRight;
-
         Vector3 theScale = transform.localScale;
+        Vector3 theScalePanel = _playerDialoguePanel.transform.localScale;
         theScale.x *= -1;
+        theScalePanel.x *= -1;
         transform.localScale = theScale;
+        _playerDialoguePanel.transform.localScale = theScalePanel;
     }
 
     private void SlopeAndChangePosition()
@@ -114,6 +124,7 @@ public class Move_Player : MonoBehaviour
                                                  _playerRb.velocity.y);
             _playerRb.velocity = _targetVelocity;
         }
+
     }
 
     private void ChangePlayerPosition()
@@ -126,8 +137,7 @@ public class Move_Player : MonoBehaviour
     private bool CheckGrounding()
     {
         RaycastHit2D hit;
-
-        hit = Physics2D.Raycast(transform.position, Vector2.down, _rayDistance, _groundMask);
+        hit = Physics2D.Raycast(_groundCheck.position, Vector2.down, _rayDistance, _groundMask);
         return hit;
     }
 
@@ -166,8 +176,24 @@ public class Move_Player : MonoBehaviour
 
             _slopeDownAngleOld = _slopeDownAngle;
 
-            Debug.DrawRay(hit.point, _slopeNormalPerpendecular, Color.red);
-            Debug.DrawRay(hit.point, hit.normal, Color.green);
+            //Debug.DrawRay(hit.point, _slopeNormalPerpendecular, Color.red);
+            //Debug.DrawRay(hit.point, hit.normal, Color.green);
+        }
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.DrawWireSphere(_groundCheckInPlayer.position, _groundCheckRadius);
+    }
+
+    private void CheckColliderInPlayer()
+    {
+        bool isGround;
+        isGround = Physics2D.OverlapCircle(_groundCheckInPlayer.position, _groundCheckRadius, _groundMask);
+
+        if (isGround)
+        {
+            _playerRb.AddForce(transform.up * _jumpForceIfInTexture, ForceMode2D.Impulse);
         }
     }
 }

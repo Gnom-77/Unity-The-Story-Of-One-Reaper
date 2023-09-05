@@ -1,3 +1,5 @@
+using Codice.Client.BaseCommands.Merge.Xml;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -6,30 +8,39 @@ using UnityEngine;
 public class DialogueSystem : MonoBehaviour
 {
     [Header("Dialogue System")]
+    [SerializeField] private byte[] _dialogQueue;
     [SerializeField] private string[] _dialogue;
-    [SerializeField] private GameObject _textPanel;
+    [SerializeField] private GameObject[] _textPanel;
     [SerializeField] private GameObject _startPanel;
-    [SerializeField] private TextMeshPro _textWindow;
+    [SerializeField] private GameObject _playerInDialogue;
+    [SerializeField] private TextMeshPro[] _textWindow;
     [SerializeField] private float _textSpeed = 1.0f;
 
     private int _index = 0;
+    private byte _numberOfCharacter;
     private bool _isStartPanel = true;
+    private bool _triggerIsActive = false;
+
 
     private void Start()
     {
-        _textPanel.SetActive(false);
+        foreach (GameObject text in _textPanel) 
+        {
+            text.SetActive(false);
+        }
         _startPanel.SetActive(false);
+        _playerInDialogue.SetActive(false);
     }
 
     private void Update()
     {
-        if (_startPanel.activeSelf && _isStartPanel == true && Input.GetKeyDown(KeyCode.E))
+        if (_isStartPanel && Input.GetKeyDown(KeyCode.E) && _triggerIsActive)
         {
             _isStartPanel = false;
             _startPanel.SetActive(false);
-            _textPanel.SetActive(true);
+            _playerInDialogue.SetActive(true);
         }
-        if (_textWindow.isActiveAndEnabled && _isStartPanel == false) 
+        if (_isStartPanel == false && _triggerIsActive) 
         {
             DialogueWindow();
         }
@@ -37,11 +48,12 @@ public class DialogueSystem : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.gameObject.CompareTag("Player") && _dialogue.Length > 0)
+        if (collision.gameObject.CompareTag("Player") && _dialogue.Length > 0 && _index == 0)
         {
             _isStartPanel = true;
-            Debug.Log("Is ative");
+            Debug.Log($"Trigger is ative {_triggerIsActive}");
             _startPanel.SetActive(true);
+            _triggerIsActive = true;
         }
     }
 
@@ -49,73 +61,78 @@ public class DialogueSystem : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Player"))
         {
-            if (_index == -2)
-                _index = -1;
-            Debug.Log("Is close");
-            _startPanel.SetActive(false);
-            _textPanel.SetActive(false);
-            _isStartPanel = true;
+            Debug.Log($"Trigger is ative {_triggerIsActive}");
+            _triggerIsActive = false;
+            CloseAllPanels();
         }
     }
 
     private void DialogueWindow()
     {
-        if (_index < 0)
+        if (_index == 0)
         {
-            LastText();
-        }
-        else if (_index == 0)
-        {
-            _textWindow.text = "";
+            _numberOfCharacter = _dialogQueue[_index];
+            CloseUnusedPanelsAndOpenUsedPanel();
+            _textWindow[_numberOfCharacter].text = null;
             StartCoroutine(nameof(TypeLine));
             _index++;
         }
-        else if (Input.GetKeyDown(KeyCode.E) && _index <= _dialogue.Length - 1) 
+        else if (Input.GetKeyDown(KeyCode.E) && _index <= _dialogue.Length - 1 && _index != 0)
         {
             StopAllCoroutines();
-            _textWindow.text = "";
+            _numberOfCharacter = _dialogQueue[_index];
+            CloseUnusedPanelsAndOpenUsedPanel();
+            _textWindow[_numberOfCharacter].text = null;
             StartCoroutine(nameof(TypeLine));
             _index++;
         }
         else if (Input.GetKeyDown(KeyCode.E) && _index > _dialogue.Length - 1)
         {
-            CloseAllPanel();
-            _index = -1;
+            CloseAllPanels();
         }
     }
 
-    private void LastText()
+    private void CloseUnusedPanelsAndOpenUsedPanel()
     {
-        if (_index == -1 && _isStartPanel == false)
+        foreach (GameObject panel in _textPanel)
         {
-            StopAllCoroutines();
-            _index = _dialogue.Length - 1;
-            _textWindow.text = "";
-            StartCoroutine(nameof(TypeLine));
-            _index = -2;
-            Debug.Log("It's a BUG!!!");
-        }
-        else if (_index == -2 && Input.GetKeyDown(KeyCode.E) && _isStartPanel == false)
-        {
-            Debug.LogError("It's a BUG!!!");
-            _index = -1;
-            CloseAllPanel();
-        }
-    }    
 
-    private void CloseAllPanel()
+            panel.SetActive(false);
+        }
+        for (int i = 0; i < _textPanel.Length; i++)
+        {
+            if (_numberOfCharacter != i)
+            {
+                _textPanel[i].SetActive(false);
+            }
+            else
+            {
+                _textPanel[i].SetActive(true);
+                return;
+            }
+        }
+    }
+
+    private void CloseAllPanels()
     {
-        Debug.Log("Is close whith metod");
+        _triggerIsActive = false;
         _startPanel.SetActive(false);
-        _textPanel.SetActive(false);
+        _playerInDialogue.SetActive(false);
+        foreach (GameObject panel in _textPanel)
+        {
+            panel.SetActive(false);
+        }
         _isStartPanel = true;
     }
+
+
+
 
     IEnumerator TypeLine()
     {
         foreach (char symbol in _dialogue[_index].ToCharArray()) 
         {
-            _textWindow.text += symbol;
+            _textWindow[_numberOfCharacter].text += symbol;
             yield return new WaitForSeconds(_textSpeed);
         }
     }
