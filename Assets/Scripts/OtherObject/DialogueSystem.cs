@@ -8,7 +8,6 @@ using UnityEngine;
 public class DialogueSystem : MonoBehaviour
 {
     [Header("Dialogue System")]
-    [SerializeField] private bool _isSkipped = true;
     [SerializeField] private byte[] _dialogQueue;
     [SerializeField] private string[] _dialogue;
     [SerializeField] private GameObject[] _textPanel;
@@ -37,7 +36,9 @@ public class DialogueSystem : MonoBehaviour
     {
         if (_isStartPanel && Input.GetKeyDown(KeyCode.E) && _triggerIsActive)
         {
-            CloseStartPanelAndOpenTextPanel();
+            _isStartPanel = false;
+            _startPanel.SetActive(false);
+            _playerInDialogue.SetActive(true);
         }
         if (_isStartPanel == false && _triggerIsActive) 
         {
@@ -47,23 +48,18 @@ public class DialogueSystem : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.gameObject.CompareTag("Player") && _dialogue.Length > 0 && _index == 0 && _isSkipped)
+        if (collision.gameObject.CompareTag("Player") && _dialogue.Length > 0 && _index == 0)
         {
             _isStartPanel = true;
             Debug.Log($"Trigger is ative {_triggerIsActive}");
             _startPanel.SetActive(true);
             _triggerIsActive = true;
         }
-        else if (collision.gameObject.CompareTag("Player") && _dialogue.Length > 0 && _index == 0 && !_isSkipped)
-        {
-            Debug.Log($"Trigger is ative {_triggerIsActive}");
-            CloseStartPanelAndOpenTextPanel();
-        }
     }
 
     private void OnTriggerExit2D(Collider2D collision)
     {
-        if (_index == _dialogue.Length - 1)
+        if (collision.gameObject.CompareTag("Player"))
         {
             Debug.Log($"Trigger is ative {_triggerIsActive}");
             _triggerIsActive = false;
@@ -127,14 +123,6 @@ public class DialogueSystem : MonoBehaviour
             panel.SetActive(false);
         }
         _isStartPanel = true;
-    }
-
-    private void CloseStartPanelAndOpenTextPanel()
-    {
-        _triggerIsActive = true;
-        _isStartPanel = false;
-        _startPanel.SetActive(false);
-        _playerInDialogue.SetActive(true);
     }
 
 

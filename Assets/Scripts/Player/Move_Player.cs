@@ -55,10 +55,6 @@ public class Move_Player : MonoBehaviour
             Move();
             Jump();
         }
-        else if (_playerDialoguePanel.activeSelf)
-        {
-            _horizontalMove = 0;
-        }
         ChangeFriction();
     }
 
