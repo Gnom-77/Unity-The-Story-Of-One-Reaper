@@ -8,7 +8,7 @@ public class Move_Player : MonoBehaviour
     [Header("Player Movement Settings")]
     [Range(0, 10)][SerializeField] private float _speedPlayer = 1f;
     [Range(0, 20)][SerializeField] private float _jumpForce = 5f;
-    [Range(0, 20)][SerializeField] private float _jumpForceIfInTexture = 1f;
+//  [Range(0, 20)][SerializeField] private float _jumpForceIfInTexture = 1f;
     [Space]
     [Header("Ground Cheker Settings")]
     [SerializeField] private Transform _groundCheck;
@@ -39,6 +39,7 @@ public class Move_Player : MonoBehaviour
     private bool _isFacingRight = true;
     private bool _isOnSlope;
     private bool _isJumping = false;
+    private bool _isGround;
 
     private void Start()
     {
@@ -55,8 +56,14 @@ public class Move_Player : MonoBehaviour
             Move();
             Jump();
         }
+        else if (_playerDialoguePanel.activeSelf)
+        {
+            _horizontalMove = 0;
+        }
         ChangeFriction();
     }
+
+
 
     private void FixedUpdate()
     {
@@ -137,8 +144,12 @@ public class Move_Player : MonoBehaviour
     private bool CheckGrounding()
     {
         RaycastHit2D hit;
-        hit = Physics2D.Raycast(_groundCheck.position, Vector2.down, _rayDistance, _groundMask);
-        return hit;
+        if (!_isGround)
+        {
+            hit = Physics2D.Raycast(_groundCheck.position, Vector2.down, _rayDistance, _groundMask);
+            return hit;
+        }
+        return false;
     }
 
     private void ChangeFriction()
@@ -188,12 +199,12 @@ public class Move_Player : MonoBehaviour
 
     private void CheckColliderInPlayer()
     {
-        bool isGround;
-        isGround = Physics2D.OverlapCircle(_groundCheckInPlayer.position, _groundCheckRadius, _groundMask);
+        _isGround = Physics2D.OverlapCircle(_groundCheckInPlayer.position, _groundCheckRadius, _groundMask);
 
-        if (isGround)
-        {
-            _playerRb.AddForce(transform.up * _jumpForceIfInTexture, ForceMode2D.Impulse);
-        }
+        // If Object In Textur, Force him
+        //if (_isGround)
+        //{
+        //    _playerRb.AddForce(transform.up * _jumpForceIfInTexture, ForceMode2D.Impulse);
+        //}
     }
 }

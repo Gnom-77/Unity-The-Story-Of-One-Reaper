@@ -4,12 +4,14 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class DialogueSystem : MonoBehaviour
 {
     [Header("Dialogue System")]
+    [SerializeField] private bool _isSkipped = true;
     [SerializeField] private byte[] _dialogQueue;
-    [SerializeField] private string[] _dialogue;
+    [TextArea][SerializeField] private List<string> _dialogue;
     [SerializeField] private GameObject[] _textPanel;
     [SerializeField] private GameObject _startPanel;
     [SerializeField] private GameObject _playerInDialogue;
@@ -24,7 +26,7 @@ public class DialogueSystem : MonoBehaviour
 
     private void Start()
     {
-        foreach (GameObject text in _textPanel) 
+        foreach (GameObject text in _textPanel)
         {
             text.SetActive(false);
         }
@@ -36,11 +38,9 @@ public class DialogueSystem : MonoBehaviour
     {
         if (_isStartPanel && Input.GetKeyDown(KeyCode.E) && _triggerIsActive)
         {
-            _isStartPanel = false;
-            _startPanel.SetActive(false);
-            _playerInDialogue.SetActive(true);
+            CloseStartPanelAndOpenTextPanel();
         }
-        if (_isStartPanel == false && _triggerIsActive) 
+        if (_isStartPanel == false && _triggerIsActive)
         {
             DialogueWindow();
         }
@@ -48,18 +48,23 @@ public class DialogueSystem : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.gameObject.CompareTag("Player") && _dialogue.Length > 0 && _index == 0)
+        if (collision.gameObject.CompareTag("Player") && _dialogue.Count > 0 && _index == 0 && _isSkipped)
         {
             _isStartPanel = true;
             Debug.Log($"Trigger is ative {_triggerIsActive}");
             _startPanel.SetActive(true);
             _triggerIsActive = true;
         }
+        else if (collision.gameObject.CompareTag("Player") && _dialogue.Count > 0 && _index == 0 && !_isSkipped)
+        {
+            Debug.Log($"Trigger is ative {_triggerIsActive}");
+            CloseStartPanelAndOpenTextPanel();
+        }
     }
 
     private void OnTriggerExit2D(Collider2D collision)
     {
-        if (collision.gameObject.CompareTag("Player"))
+        if (_index == _dialogue.Count - 1)
         {
             Debug.Log($"Trigger is ative {_triggerIsActive}");
             _triggerIsActive = false;
@@ -77,7 +82,7 @@ public class DialogueSystem : MonoBehaviour
             StartCoroutine(nameof(TypeLine));
             _index++;
         }
-        else if (Input.GetKeyDown(KeyCode.E) && _index <= _dialogue.Length - 1 && _index != 0)
+        else if (Input.GetKeyDown(KeyCode.E) && _index <= _dialogue.Count - 1 && _index != 0)
         {
             StopAllCoroutines();
             _numberOfCharacter = _dialogQueue[_index];
@@ -86,7 +91,7 @@ public class DialogueSystem : MonoBehaviour
             StartCoroutine(nameof(TypeLine));
             _index++;
         }
-        else if (Input.GetKeyDown(KeyCode.E) && _index > _dialogue.Length - 1)
+        else if (Input.GetKeyDown(KeyCode.E) && _index > _dialogue.Count - 1)
         {
             CloseAllPanels();
         }
@@ -125,12 +130,20 @@ public class DialogueSystem : MonoBehaviour
         _isStartPanel = true;
     }
 
+    private void CloseStartPanelAndOpenTextPanel()
+    {
+        _triggerIsActive = true;
+        _isStartPanel = false;
+        _startPanel.SetActive(false);
+        _playerInDialogue.SetActive(true);
+    }
+
 
 
 
     IEnumerator TypeLine()
     {
-        foreach (char symbol in _dialogue[_index].ToCharArray()) 
+        foreach (char symbol in _dialogue[_index].ToCharArray())
         {
             _textWindow[_numberOfCharacter].text += symbol;
             yield return new WaitForSeconds(_textSpeed);
